@@ -6,4 +6,3 @@ interface BooksApiService {
     @GET("volumes")
     suspend fun searchBooks(@Query("q") query: String): BookSearchResponse
 }
-
