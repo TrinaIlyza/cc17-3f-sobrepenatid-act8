@@ -1,34 +1,16 @@
 package com.example.bookshelfapp
 
-import kotlinx.coroutines.delay
-import retrofit2.HttpException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class BooksRepository(private val apiService: BooksApiService) {
-    suspend fun searchBooks(query: String): List<Book> {
-        var attempts = 0
-        while (true) {
+class BooksRepository(private val service: BooksApiService) {
+    suspend fun searchBooks(query: String): List<BookItem>? {
+        return withContext(Dispatchers.IO) {
             try {
-                val response = apiService.searchBooks(query)
-                return response.items.map {
-                    Book(
-                        id = it.id,
-                        title = it.volumeInfo.title,
-                        thumbnail = it.volumeInfo.imageLinks?.thumbnail?.replace("http", "https")
-                    )
-                }
-            } catch (e: HttpException) {
-                if (e.code() == 429 && attempts < MAX_RETRIES) {
-                    attempts++
-                    delay(RETRY_DELAY_MS * attempts) // Exponential backoff
-                } else {
-                    throw e
-                }
+                service.searchBooks(query).items
+            } catch (e: Exception) {
+                null
             }
         }
-    }
-
-    companion object {
-        private const val MAX_RETRIES = 3
-        private const val RETRY_DELAY_MS = 1000L // Initial delay of 1 second
     }
 }

@@ -1,36 +1,44 @@
 package com.example.bookshelfapp
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.GridLayoutManager
+import com.example.bookshelfapp.databinding.ActivityMainBinding
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var viewModel: BooksViewModel
+    private lateinit var binding: ActivityMainBinding
+    private val viewModel: BooksViewModel by viewModels {
+        val service = Retrofit.Builder()
+            .baseUrl("https://www.googleapis.com/books/v1/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(BooksApiService::class.java)
+        BooksViewModelFactory(BooksRepository(service))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // Initialize ViewModel with custom factory
-        val factory = BooksViewModelFactory(BooksRepository(RetrofitInstance.api))
-        viewModel = ViewModelProvider(this, factory)[BooksViewModel::class.java]
+        setupRecyclerView()
+        observeBooks()
+        viewModel.searchBooks("The Hunger Games")
+    }
 
-        // Set up RecyclerView
-        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
+    private fun setupRecyclerView() {
+        binding.recyclerView.layoutManager = GridLayoutManager(this, 2)
+    }
 
-        // Observe LiveData from ViewModel
+    private fun observeBooks() {
         viewModel.books.observe(this) { books ->
-            val adapter = BookAdapter(books)
-            recyclerView.adapter = adapter
+            if (books.isNotEmpty()) {
+                binding.recyclerView.adapter = BooksAdapter(books)
+            }
         }
-
-        // Trigger a search
-        viewModel.searchBooks("jazz history")
     }
 }

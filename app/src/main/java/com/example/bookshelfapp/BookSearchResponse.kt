@@ -4,6 +4,10 @@ data class BookSearchResponse(
     val items: List<BookItem>
 )
 
+data class ImageLinks(
+    val thumbnail: String
+)
+
 data class BookItem(
     val id: String,
     val volumeInfo: VolumeInfo
@@ -14,6 +18,3 @@ data class VolumeInfo(
     val imageLinks: ImageLinks?
 )
 
-data class ImageLinks(
-    val thumbnail: String
-)
